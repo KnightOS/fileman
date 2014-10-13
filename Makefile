@@ -1,30 +1,17 @@
-OUTDIR:=bin/
-BINDIR:=$(OUTDIR)bin/
-ETCDIR:=$(OUTDIR)etc/
-APPDIR:=$(OUTDIR)var/applications/
+include .knightos/variables.make
 
-DEPENDENCIES=../corelib/;../configlib
+ALL_TARGETS:=$(BIN)fileman $(ETC)fileman.conf $(APPS)fileman.app
 
-all: package
+$(BIN)fileman: main.asm
+	mkdir -p $(BIN)
+	$(AS) $(ASFLAGS) --listing $(OUT)main.list main.asm $(BIN)fileman
 
-package: $(BINDIR)fileman $(ETCDIR)fileman.conf
-	kpack fileman-0.1.0.pkg $(OUTDIR)
+$(ETC)fileman.conf: config/fileman.conf
+	mkdir -p $(ETC)
+	cp config/fileman.conf $(ETC)
 
-$(BINDIR)fileman: fileman.asm
-	mkdir -p $(BINDIR)
-	mkdir -p $(APPDIR)
-	$(AS) $(ASFLAGS) --define "$(PLATFORM)" --include "$(INCLUDE);$(PACKAGEPATH)/fileman/;$(DEPENDENCIES)" fileman.asm $(BINDIR)fileman
-	cp fileman.app $(APPDIR)
+$(APPS)fileman.app: config/fileman.app
+	mkdir -p $(APPS)
+	cp config/fileman.app $(APPS)
 
-$(ETCDIR)fileman.conf: fileman.conf
-	mkdir -p $(ETCDIR)
-	cp fileman.conf $(ETCDIR)fileman.conf
-
-clean:
-	rm -rf $(OUTDIR)
-	rm -rf fileman-0.1.0.pkg
-
-install: package
-	kpack -e -s fileman-0.1.0.pkg $(PREFIX)
-
-.PHONY: all clean
+include .knightos/sdk.make
