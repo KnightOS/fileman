@@ -335,8 +335,8 @@ scrollOffset:
 scrollTop:
     .db 0
 
-#include "listing.asm"
-#include "draw.asm"
-#include "actions.asm"
-#include "settings.asm"
-#include "constants.asm"
+#include "src/listing.asm"
+#include "src/draw.asm"
+#include "src/actions.asm"
+#include "src/settings.asm"
+#include "src/constants.asm"

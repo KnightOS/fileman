@@ -2,9 +2,9 @@ include .knightos/variables.make
 
 ALL_TARGETS:=$(BIN)fileman $(ETC)fileman.conf $(APPS)fileman.app
 
-$(BIN)fileman: main.asm
+$(BIN)fileman: src/*.asm
 	mkdir -p $(BIN)
-	$(AS) $(ASFLAGS) --listing $(OUT)main.list main.asm $(BIN)fileman
+	$(AS) $(ASFLAGS) --listing $(OUT)main.list src/main.asm $(BIN)fileman
 
 $(ETC)fileman.conf: config/fileman.conf
 	mkdir -p $(ETC)
