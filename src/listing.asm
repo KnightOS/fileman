@@ -122,7 +122,7 @@ listCallback:
             cp fsDirectory
             kjp(nz, .handleUnknown)
 
-            ; Handle directory
+.handleDirectory:
             ld hl, kernelGarbage
             kld(a, (config_showHidden))
             or a
@@ -136,6 +136,7 @@ _:          pcall(strlen)
             kld(de, directoryIcon)
             ld (ix), e \ ld (ix + 1), d
             push ix \ pop de \ inc de \ inc de
+            dec bc \ dec bc
             ldir
 
             kld(hl, (directoryList))
