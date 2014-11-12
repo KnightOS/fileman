@@ -83,6 +83,7 @@ _:  ; Allocate space for fileList and directoryList
 
 main_loop:
     kcall(doListing)
+main_loop_draw:
     kcall(drawList)
     ; Save list length
     push bc
@@ -172,7 +173,7 @@ idleLoop:
             inc (hl)
         pop bc
     pop bc
-    kjp(drawList)
+    kjp(main_loop_draw)
 .handleUp:
             ld a, d
             or a
@@ -208,7 +209,7 @@ idleLoop:
             dec (hl)
         pop bc
     pop bc
-    kjp(drawList)
+    kjp(main_loop_draw)
 .handleEnter:
         pop bc
     pop bc
