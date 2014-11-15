@@ -110,6 +110,7 @@ trampoline:
     ld a, 0 ; Thread ID will be loaded here
     pcall(checkThread)
     corelib(nz, launchCastle)
+    pcall(nz, killCurrentThread)
     ld (hwLockLCD), a
     ld (hwLockKeypad), a
     pcall(resumeThread)
