@@ -56,11 +56,44 @@ action_new:
     jp 0
 new_menu_options:
     .dw freeAndLoopBack ; File
-    .dw freeAndLoopBack ; Directory
+    .dw action_new_directory ; Directory
     .dw freeAndLoopBack ; Link
 
 action_exit:
     pcall(exitThread)
+
+action_new_directory:
+    ld bc, 33 ; TODO: better max name length
+    pcall(malloc)
+    ld (ix), 0
+    kld(hl, createDirPrompt)
+    dec bc
+    corelib(promptString)
+    or a
+    kjp(z, freeAndLoopBack)
+    ; Create new directory
+    push ix \ pop de
+    kld(hl, (currentPath))
+    xor a
+    ld bc, 0
+    cpir
+    dec hl
+    ex de, hl
+    pcall(strlen)
+    inc bc
+    ldir
+    kld(de, (currentPath))
+    pcall(createDirectory)
+    ex de, hl
+    pcall(strlen)
+    add hl, bc
+    ld a, '/'
+    cpdr
+    inc hl
+    inc hl
+    xor a
+    ld (hl), a
+    kjp(freeAndLoopBack)
     
 action_delete:
     ld a, d
