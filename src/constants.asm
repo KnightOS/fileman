@@ -47,9 +47,9 @@ deletionOptions:
     .db "Cancel", 0
     .db "Delete", 0
 openFailMessage:
-    .db "Sorry, this\nfile could not\nbe opened.", 0
+    .db "Sorry, this file\ncould not be\nopened.", 0
 openFailOptions:
     .db 1
     .db "Dismiss", 0
 startNotFound:
-    .db "Start-up\ndirectory not\nfound.", 0
+    .db "Start-up directory\nnot found.", 0
