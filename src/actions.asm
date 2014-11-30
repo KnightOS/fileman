@@ -1,3 +1,67 @@
+action_menu:
+    push bc
+    push hl
+    push de
+        ld c, 40
+        kld(hl, menuOptions)
+        corelib(showMenu)
+        cp 0xFF
+        kjp(z, freeAndLoopBack)
+        add a, a ; A *= 2
+        kld(hl, menu_functions)
+        add a, l \ ld l, a \ jr nc, $+3 \ inc h
+        ld e, (hl) \ inc hl \ ld d, (hl)
+        ex de, hl
+        push hl
+            pcall(getCurrentThreadId)
+            pcall(getEntryPoint)
+        pop bc
+        add hl, bc
+        kld((.menu_smc + 1), hl)
+    pop de
+    pop hl
+    pop bc
+.menu_smc:
+    jp 0
+menu_functions:
+    .dw action_new
+    .dw action_delete
+    .dw freeAndLoopBack ; Rename
+    .dw action_exit
+
+action_new:
+    push bc
+    push hl
+    push de
+        ld c, 40
+        kld(hl, newOptions)
+        corelib(showMenu)
+        cp 0xFF
+        kjp(z, freeAndLoopBack)
+        add a, a ; A *= 2
+        kld(hl, new_menu_options)
+        add a, l \ ld l, a \ jr nc, $+3 \ inc h
+        ld e, (hl) \ inc hl \ ld d, (hl)
+        ex de, hl
+        push hl
+            pcall(getCurrentThreadId)
+            pcall(getEntryPoint)
+        pop bc
+        add hl, bc
+        kld((.menu_smc + 1), hl)
+    pop de
+    pop hl
+    pop bc
+.menu_smc:
+    jp 0
+new_menu_options:
+    .dw freeAndLoopBack ; File
+    .dw freeAndLoopBack ; Directory
+    .dw freeAndLoopBack ; Link
+
+action_exit:
+    pcall(exitThread)
+    
 action_delete:
     ld a, d
     cp b
@@ -38,7 +102,17 @@ action_delete:
     ldir
     kld(de, (currentPath))
     pcall(deleteFile)
-    ret
+
+    ex de, hl
+    pcall(strlen)
+    add hl, bc
+    ld a, '/'
+    cpdr
+    inc hl ; preserve trailing slash
+    inc hl
+    xor a
+    ld (hl), a
+    kjp(freeAndLoopBack)
 .deleteDirectory:
     ; TODO: delete directories
     ret

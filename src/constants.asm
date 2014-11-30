@@ -53,3 +53,20 @@ openFailOptions:
     .db "Dismiss", 0
 startNotFound:
     .db "Start-up directory\nnot found.", 0
+menuOptions:
+    .db 4
+    .db "New...", 0
+    .db "Delete", 0
+    .db "Rename", 0
+    .db "Exit", 0
+newOptions:
+    .db 3 ; Modified from config to omit "Link" unless option enabled (TODO)
+    .db "File", 0
+    .db "Directory", 0
+    .db "Link", 0
+renamePrompt:
+    .db "Rename file to:", 0
+createFilePrompt:
+    .db "Name of new file:", 0
+createDirPrompt:
+    .db "Name of new directory:", 0

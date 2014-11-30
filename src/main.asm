@@ -131,6 +131,8 @@ idleLoop:
             kjp(z, .handleEnter)
             cp kDel
             kjp(z, .handleDelete)
+            cp kF3
+            kjp(z, .handleMenu)
             jr idleLoop
 .handleDown:
         pop bc
@@ -251,21 +253,15 @@ idleLoop:
 .handleDelete:
         pop bc
     pop bc
-    kcall(action_delete)
-    ex de, hl
-    pcall(strlen)
-    add hl, bc
-    ld a, '/'
-    cpdr
-    inc hl ; preserve trailing slash
-    inc hl
-    xor a
-    ld (hl), a
-    jr freeAndLoopBack
+    kjp(action_delete)
 .exit:
         pop bc
     pop bc
     ret
+.handleMenu:
+        pop bc
+    pop bc
+    kjp(action_menu)
 .handleParent:
         pop bc
     pop bc
