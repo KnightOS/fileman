@@ -1,6 +1,7 @@
 include .knightos/variables.make
 
-ALL_TARGETS:=$(BIN)fileman $(ETC)fileman.conf $(APPS)fileman.app $(ETC)settings/File\ Manager.conf
+ALL_TARGETS:=$(BIN)fileman $(ETC)fileman.conf $(APPS)fileman.app \
+	$(ETC)settings/File\ Manager.conf $(SHARE)icons/fileman.img
 
 $(BIN)fileman: src/*.asm
 	mkdir -p $(BIN)
@@ -17,5 +18,9 @@ $(ETC)settings/File\ Manager.conf: config/File\ Manager.conf
 $(APPS)fileman.app: config/fileman.app
 	mkdir -p $(APPS)
 	cp config/fileman.app $(APPS)
+
+$(SHARE)icons/fileman.img: config/fileman.png
+	mkdir -p $(SHARE)icons
+	kimg -c config/fileman.png $(SHARE)icons/fileman.img
 
 include .knightos/sdk.make
