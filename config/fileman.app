@@ -1,3 +1,3 @@
 name=File Manager
-icon=/share/icons/fileman.kio
+icon=/share/icons/fileman.img
 exec=/bin/fileman
