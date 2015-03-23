@@ -33,7 +33,7 @@ action_new:
     push bc
     push hl
     push de
-        ld c, 40
+        ld c, 42
         kld(hl, newOptions)
         corelib(showMenu)
         cp 0xFF
