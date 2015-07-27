@@ -72,7 +72,8 @@ _:  pop af
     ld h, (ix + 1)
     inc hl
     inc hl
-    pcall(drawStr)
+    ld c, 16
+    kcall(drawStrTrunc)
     push bc
         or a
         jr z, _
@@ -162,3 +163,49 @@ _:      ld c, 10
         jr nz, -_
     pop bc
     ret
+
+; Same arguments as drawStr
+; C: Maximum length
+drawStrTrunc:
+    push af
+    push hl
+        push bc
+            pcall(strlen)
+            ld a, c
+        pop bc
+        cp c
+        jr c, _
+        push bc \ push hl \ push de
+            ld b, e ; save e (faster than push/pop)
+            ld h, 4 ; char width
+            ld e, c ; length of string
+            inc e
+            pcall(mul8By8)
+            ld e, b ; restore e
+            ld d, l ; low byte of hl
+            ld b, 5
+            kld(hl, trunc_sprite)
+            pcall(putSpriteOR)
+        pop de \ pop hl \ pop bc
+        dec c
+
+_:      ld a, c
+        or a
+        jr z, _
+        dec c
+        ld a, (hl)
+        or a
+        jr z, _
+        pcall(drawChar)
+        inc hl
+        jr -_
+_:  pop hl
+    pop af
+    ret
+
+trunc_sprite:
+    .db 0b00000000
+    .db 0b00100000
+    .db 0b11100000
+    .db 0b00100000
+    .db 0b00000000
