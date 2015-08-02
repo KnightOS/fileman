@@ -81,10 +81,13 @@ _:  ; Allocate space for fileList and directoryList
     push ix \ pop hl
     kld((directoryList), hl)
 
-main_loop:
+browse_loop:
     kcall(doListing)
-main_loop_draw:
+browse_loop_draw:
     kcall(drawList)
+    xor a
+    kld(hl, tabs)
+    corelib(drawTabs)
     ; Save list length
     push bc
         ld a, b
@@ -96,24 +99,24 @@ main_loop_draw:
         push bc ; Save total length (dirs+files)
             ld hl, 0
             pcall(cpHLBC)
-            jr z, idleLoop
+            jr z, browse_idle
 
             kcall(drawChrome)
 
             kld(a, (scrollOffset))
             ld d, a ; Index
 
-idleLoop:
+browse_idle:
             pcall(fastCopy)
             pcall(flushKeys)
             corelib(appWaitKey)
-            jr nz, idleLoop
+            jr nz, browse_idle
 
             cp kMode
             kjp(z, .exit)
             ld hl, 0
             pcall(cpHLBC)
-            jr z, idleLoop
+            jr z, browse_idle
 
             cp kDown
             kjp(z, .handleDown)
@@ -128,12 +131,18 @@ idleLoop:
             cp k2nd
             kjp(z, .handleEnter)
             cp kRight
-            kjp(z, .handleEnter)
+            kjp(z, .handleDetails)
             cp kDel
             kjp(z, .handleDelete)
             cp kF3
             kjp(z, .handleMenu)
-            jr idleLoop
+            jr browse_idle
+.handleDetails:
+        pop bc
+    pop bc \ push bc
+        kcall(details_loop)
+    pop bc
+    kjp(browse_loop_draw)
 .handleDown:
         pop bc
         ld a, d
@@ -142,13 +151,13 @@ idleLoop:
         push bc
             ld c, 87
             ld b, 7
-            jr nc, idleLoop
+            jr nc, browse_idle
             ld a, d
             push hl
                 kld(hl, scrollTop)
                 sub (hl)
             pop hl
-            cp 7
+            cp 6
             jr z, .tryScrollDown
             push de
                 ld d, a
@@ -156,9 +165,10 @@ idleLoop:
                 add a, a
                 add a, d
                 add a, d ; A *= 6
-                add a, 7
+                add a, 14
             pop de
             ld l, a
+            dec b
             pcall(rectXOR)
             add a, 6
             ld l, a
@@ -166,7 +176,7 @@ idleLoop:
             inc d
             ld a, d
             kld((scrollOffset), a)
-            kjp(idleLoop)
+            kjp(browse_idle)
 .tryScrollDown:
             inc d
             ld a, d
@@ -175,11 +185,11 @@ idleLoop:
             inc (hl)
         pop bc
     pop bc
-    kjp(main_loop_draw)
+    kjp(browse_loop_draw)
 .handleUp:
             ld a, d
             or a
-            kjp(z, idleLoop)
+            kjp(z, browse_idle)
             push hl
                 kld(hl, scrollTop)
                 sub (hl)
@@ -192,9 +202,10 @@ idleLoop:
                 add a, a
                 add a, d
                 add a, d ; A *= 6
-                add a, 7
+                add a, 14
             pop de
             ld l, a
+            ld b, 6
             pcall(rectXOR)
             sub a, 6
             ld l, a
@@ -202,7 +213,7 @@ idleLoop:
             dec d
             ld a, d
             kld((scrollOffset), a)
-            kjp(idleLoop)
+            kjp(browse_idle)
 .tryScrollUp:
             dec d
             ld a, d
@@ -211,7 +222,7 @@ idleLoop:
             dec (hl)
         pop bc
     pop bc
-    kjp(main_loop_draw)
+    kjp(browse_loop_draw)
 .handleEnter:
         pop bc
     pop bc
@@ -303,7 +314,7 @@ freeAndLoopBack:
     djnz .freeDirs
 _:  kld(a, (totalFiles))
     or a
-    kjp(z, main_loop)
+    kjp(z, browse_loop)
     ld b, a
     kld(hl, (fileList))
 .freeFiles:
@@ -314,7 +325,7 @@ _:  kld(a, (totalFiles))
     push de \ pop ix
     pcall(free)
     djnz .freeFiles
-    kjp(main_loop)
+    kjp(browse_loop)
 
 ; Variables
 currentPath:
@@ -331,8 +342,13 @@ scrollOffset:
     .db 0
 scrollTop:
     .db 0
+tabs:
+    .db 2
+    .db "Browse", 0
+    .db "Details", 0
 
 #include "src/listing.asm"
+#include "src/details.asm"
 #include "src/draw.asm"
 #include "src/actions.asm"
 #include "src/settings.asm"

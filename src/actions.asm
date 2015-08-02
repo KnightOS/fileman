@@ -156,8 +156,7 @@ action_open:
     kld(hl, (fileList))
     add l
     ld l, a
-    jr nc, $+3
-    inc h
+    jr nc, $+3 \ inc h
     ld e, (hl)
     inc hl
     ld d, (hl)

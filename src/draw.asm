@@ -1,20 +1,24 @@
-drawList:
+window:
     pcall(clearBuffer)
     kld(hl, (currentPath))
     ld a, 0b00000100
     corelib(drawWindow)
+    ret
+
+drawList:
+    kcall(window)
     xor a
     cp b
     jr nz, _
     cp c
     jr nz, _
     ; There are no files or folders here
-    ld de, 0x0208
+    ld de, 0x020E
     kld(hl, nothingHereText)
     pcall(drawStr)
     kjp(.done)
 
-_:  ld de, 0x0808
+_:  ld de, 0x080E
     kld(a, (scrollTop))
     ld h, a
     push bc
@@ -124,7 +128,7 @@ drawChrome:
     or a
     jr z, _
     kld(hl, upCaretIcon)
-    ld de, 0x5908
+    ld de, 0x590E
     ld b, 3
     pcall(putSpriteOR)
 
@@ -137,10 +141,10 @@ _:  ld e, 8 ; x
     add a, a
     add a, l
     add a, l
-    add a, 7
+    add a, 14
     ld l, a ; y
     ld c, 87 ; w
-    ld b, 7 ; h
+    ld b, 6 ; h
     pcall(rectXOR)
     ret
 
