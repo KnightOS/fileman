@@ -132,6 +132,8 @@ browse_idle:
             kjp(z, .handleEnter)
             cp kRight
             kjp(z, .handleDetails)
+            cp kSTAT
+            kjp(z, .handleDetails)
             cp kDel
             kjp(z, .handleDelete)
             cp kF3

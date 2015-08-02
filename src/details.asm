@@ -83,6 +83,8 @@ details_loop:
     pcall(waitKey)
     cp kLeft
     ret z
+    cp kClear
+    ret z
     cp kDown
     jr z, .handle_down
     cp kUp
