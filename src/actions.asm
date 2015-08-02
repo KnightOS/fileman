@@ -161,6 +161,7 @@ action_open:
     inc hl
     ld d, (hl)
     inc de \ inc de
+.with_de:
     ; Copy DE into the current path, but not for long
     kld(hl, (currentPath))
     xor a

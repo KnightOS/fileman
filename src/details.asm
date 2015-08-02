@@ -17,6 +17,7 @@ details_loop:
     ex de, hl
     kld((.file_name), hl)
 
+.redraw:
     kcall(window)
     ld a, 1
     kld(hl, tabs)
@@ -67,10 +68,63 @@ details_loop:
     kld(hl, .temp)
     pcall(drawStr)
 .continue:
+    ; Draw actions
+    ld de, 0x0226
+    ld b, 2
+    kld(hl, .open_with)
+    pcall(drawStr)
 
+    ld b, 0
+.draw_loop:
+    kcall(.draw_select)
+.idle_loop:
     pcall(fastCopy)
     pcall(flushKeys)
     pcall(waitKey)
+    cp kLeft
+    ret z
+    cp kDown
+    jr z, .handle_down
+    cp kUp
+    jr z, .handle_up
+    cp kEnter
+    jr z, .handle_enter
+    cp k2nd
+    jr z, .handle_enter
+    jr .idle_loop
+.handle_down:
+    kcall(.draw_select)
+    ld b, 1
+    jr .draw_loop
+.handle_up:
+    kcall(.draw_select)
+    ld b, 0
+    jr .draw_loop
+.handle_enter:
+    ld a, b
+    or a
+    jr nz, .launch_picker
+    ; Launch program
+    kld(de, (.file_name))
+    kjp(with_de@action_open)
+.launch_picker:
+    kld(hl, .not_implemented)
+    kld(de, openFailOptions)
+    xor a
+    corelib(showMessage)
+    kjp(.redraw)
+.draw_select:
+    push bc
+        ld l, 0x26 + 6
+        ld a, b
+        add a, a \ ld b, a \ add a, a \ add a, b ; A *= 6
+        add a, l
+        ld l, a
+        ld c, 94
+        ld b, 6
+        ld e, 1
+        pcall(rectXOR)
+    pop bc
     ret
 .file_info:
     .dw 0
@@ -78,8 +132,14 @@ details_loop:
     .dw 0
 .size:
     .db "Size: ", 0
+.open_with:
+    .db "Open with:\n"
+    .db " Default program\n"
+    .db " Other...", 0
 .temp:
     .db "/todo/implement/this", 0
+.not_implemented:
+    .db "Not implemented", 0
 .linkSprite:
     .db 0b01000000
     .db 0b00100000
