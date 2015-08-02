@@ -57,6 +57,8 @@ details_loop:
         ex de, hl
     pop de
     pcall(drawDecHL)
+    kld(hl, .bytes)
+    pcall(drawStr)
     jr .continue
 .symlink:
     kld(hl, .linkSprite)
@@ -134,6 +136,8 @@ details_loop:
     .dw 0
 .size:
     .db "Size: ", 0
+.bytes:
+    .db " bytes", 0
 .open_with:
     .db "Open with:\n"
     .db " Default program\n"
