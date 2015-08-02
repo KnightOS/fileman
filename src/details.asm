@@ -18,7 +18,11 @@ details_loop:
     kld((.file_name), hl)
 
 .redraw:
-    kcall(window)
+    pcall(clearBuffer)
+    kld(hl, (currentPath))
+    xor a
+    corelib(drawWindow)
+
     ld a, 1
     kld(hl, tabs)
     corelib(drawTabs)
