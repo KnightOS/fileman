@@ -87,6 +87,7 @@ action_new_directory:
     ex de, hl
     pcall(strlen)
     add hl, bc
+    inc bc
     ld a, '/'
     cpdr
     inc hl
@@ -135,6 +136,7 @@ action_new_link:
 _:  ex de, hl
     pcall(strlen)
     add hl, bc
+    inc bc
     ld a, '/'
     cpdr
     inc hl
