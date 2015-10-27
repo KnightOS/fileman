@@ -84,7 +84,9 @@ action_new_directory:
     ldir
     kld(de, (currentPath))
     pcall(createDirectory)
-    ex de, hl
+    jr z, _
+    coreLib(showError)
+_:  ex de, hl
     pcall(strlen)
     add hl, bc
     inc bc
