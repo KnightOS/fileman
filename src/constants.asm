@@ -70,3 +70,7 @@ createFilePrompt:
     .db "Name of new file:", 0
 createDirPrompt:
     .db "Name of new directory:", 0
+createLinkTargetPrompt:
+    .db "Path to link target:",0
+createLinkNamePrompt:
+    .db "Name of new link:",0
