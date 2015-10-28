@@ -60,7 +60,7 @@ menuOptions:
     .db "Rename", 0
     .db "Exit", 0
 newOptions:
-    .db 3 ; Modified from config to omit "Link" unless option enabled (TODO)
+    .db 3 ; Modified from config to omit "Link" unless option enabled
     .db "File", 0
     .db "Directory", 0
     .db "Link", 0

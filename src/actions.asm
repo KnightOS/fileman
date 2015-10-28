@@ -33,6 +33,15 @@ action_new:
     push bc
     push hl
     push de
+        ; Check if symlink option should be shown
+        kld(a, (config_editSymLinks))
+        or a
+        jr z, _
+        ld a, 3
+        jr ++_
+_:      ld a, 2
+_:      kld((newOptions), a)
+        ; Show menu
         ld c, 42
         kld(hl, newOptions)
         corelib(showMenu)
