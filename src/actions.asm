@@ -33,6 +33,15 @@ action_new:
     push bc
     push hl
     push de
+        ; Check if symlink option should be shown
+        kld(a, (config_editSymLinks))
+        or a
+        jr z, _
+        ld a, 3
+        jr ++_
+_:      ld a, 2
+_:      kld((newOptions), a)
+        ; Show menu
         ld c, 42
         kld(hl, newOptions)
         corelib(showMenu)
@@ -57,7 +66,7 @@ action_new:
 new_menu_options:
     .dw freeAndLoopBack ; File
     .dw action_new_directory ; Directory
-    .dw freeAndLoopBack ; Link
+    .dw action_new_link ; Link
 
 action_exit:
     pcall(exitThread)
@@ -84,9 +93,61 @@ action_new_directory:
     ldir
     kld(de, (currentPath))
     pcall(createDirectory)
-    ex de, hl
+    jr z, _
+    coreLib(showError)
+_:  ex de, hl
     pcall(strlen)
     add hl, bc
+    inc bc
+    ld a, '/'
+    cpdr
+    inc hl
+    inc hl
+    xor a
+    ld (hl), a
+    kjp(freeAndLoopBack)
+
+action_new_link:
+    # Get target path and link name
+    ld bc, 0x42 ; TODO: better max name length
+    pcall(malloc)
+    ld (ix), 0
+    kld(hl, createLinkTargetPrompt)
+    ld bc, 0x20
+    corelib(promptString)
+    or a
+    kjp(z, freeAndLoopBack)
+    add ix, bc
+    inc ix
+    ld (ix), 0
+    kld(hl, createLinkNamePrompt)
+    corelib(promptString)
+    or a
+    kjp(z, freeAndLoopBack)
+    # Add link name to current dir
+    push ix \ pop de
+    kld(hl, (currentPath))
+    xor a
+    ld bc, 0
+    cpir
+    dec hl
+    ex de, hl
+    pcall(strlen)
+    inc bc
+    ldir
+    # Creat link
+    kld(de, (currentPath))
+    pcall(memSeekToStart)
+    push ix \ pop hl
+    pcall(createSymLink)
+    # Show error if it failed
+    jr z, _
+    coreLib(showError)
+    # Remove link name from current dir
+_:  ex de, hl
+    pcall(strlen)
+    add hl, bc
+    inc bc
     ld a, '/'
     cpdr
     inc hl
