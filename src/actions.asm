@@ -64,12 +64,47 @@ _:      kld((newOptions), a)
 .menu_smc:
     jp 0
 new_menu_options:
-    .dw freeAndLoopBack ; File
+    .dw action_new_file ; File
     .dw action_new_directory ; Directory
     .dw action_new_link ; Link
 
 action_exit:
     pcall(exitThread)
+
+action_new_file:
+    ; Get name of file
+    ld bc, 0x21
+    pcall(malloc)
+    ld (ix), 0
+    kld(hl, createFilePrompt)
+    ld bc, 0x20
+    corelib(promptString)
+    or a
+    kjp(z, freeAndLoopBack)
+    ; Add file name to current dir
+    kcall(addToCurrentPath)
+    ; Check if file exists
+    kld(de, (currentpath))
+    pcall(fileExists)
+    jr nz, _
+    ld a, errAlreadyExists
+    or 1
+    corelib(showError)
+    ; Open file stream and write a 0 to it
+_:  pcall(openFileWrite)
+    cp errFileNotFound
+    jr z, _
+    corelib(showError)
+_:  xor a
+    pcall(streamWriteByte)
+    corelib(showError)
+    pcall(closeStream)
+    corelib(showError)
+.done:
+    ; Remove file name from current dir
+    kld(de, (currentPath))
+    kcall(restoreCurrentpath)
+    kjp(freeAndLoopBack)
 
 action_new_directory:
     ld bc, 33 ; TODO: better max name length
@@ -81,34 +116,16 @@ action_new_directory:
     or a
     kjp(z, freeAndLoopBack)
     ; Create new directory
-    push ix \ pop de
-    kld(hl, (currentPath))
-    xor a
-    ld bc, 0
-    cpir
-    dec hl
-    ex de, hl
-    pcall(strlen)
-    inc bc
-    ldir
+    kcall(addToCurrentPath)
     kld(de, (currentPath))
     pcall(createDirectory)
     jr z, _
-    coreLib(showError)
-_:  ex de, hl
-    pcall(strlen)
-    add hl, bc
-    inc bc
-    ld a, '/'
-    cpdr
-    inc hl
-    inc hl
-    xor a
-    ld (hl), a
+    corelib(showError)
+_:  kcall(restoreCurrentPath)
     kjp(freeAndLoopBack)
 
 action_new_link:
-    # Get target path and link name
+    ; Get target path and link name
     ld bc, 0x42 ; TODO: better max name length
     pcall(malloc)
     ld (ix), 0
@@ -124,36 +141,18 @@ action_new_link:
     corelib(promptString)
     or a
     kjp(z, freeAndLoopBack)
-    # Add link name to current dir
-    push ix \ pop de
-    kld(hl, (currentPath))
-    xor a
-    ld bc, 0
-    cpir
-    dec hl
-    ex de, hl
-    pcall(strlen)
-    inc bc
-    ldir
-    # Creat link
+    ; Add link name to current dir
+    kcall(addToCurrentPath)
+    ; Create link
     kld(de, (currentPath))
     pcall(memSeekToStart)
     push ix \ pop hl
     pcall(createSymLink)
-    # Show error if it failed
+    ; Show error if it failed
     jr z, _
-    coreLib(showError)
-    # Remove link name from current dir
-_:  ex de, hl
-    pcall(strlen)
-    add hl, bc
-    inc bc
-    ld a, '/'
-    cpdr
-    inc hl
-    inc hl
-    xor a
-    ld (hl), a
+    corelib(showError)
+    ; Remove link name from current dir
+_:  kcall(restoreCurrentPath)
     kjp(freeAndLoopBack)
     
 action_delete:
@@ -284,3 +283,31 @@ trampoline:
     pcall(resumeThread)
     pcall(killCurrentThread)
 trampoline_end:
+
+addToCurrentPath:
+    ; Add file name at IX to current dir
+    push ix \ pop de
+    kld(hl, (currentPath))
+    xor a
+    ld bc, 0
+    cpir
+    dec hl
+    ex de, hl
+    pcall(strlen)
+    inc bc
+    ldir
+    ret
+
+restoreCurrentPath:
+    ; Remove file name from current path
+    ex de, hl
+    pcall(strlen)
+    add hl, bc
+    inc bc
+    ld a, '/'
+    cpdr
+    inc hl
+    inc hl
+    xor a
+    ld (hl), a
+    ret
