@@ -37,9 +37,9 @@ action_new:
         kld(a, (config_editSymLinks))
         or a
         jr z, _
-        ld a, 3
+        ld a, 2
         jr ++_
-_:      ld a, 2
+_:      ld a, 1
 _:      kld((newOptions), a)
         ; Show menu
         ld c, 42
@@ -64,47 +64,11 @@ _:      kld((newOptions), a)
 .menu_smc:
     jp 0
 new_menu_options:
-    .dw action_new_file ; File
     .dw action_new_directory ; Directory
     .dw action_new_link ; Link
 
 action_exit:
     pcall(exitThread)
-
-action_new_file:
-    ; Get name of file
-    ld bc, 0x21
-    pcall(malloc)
-    ld (ix), 0
-    kld(hl, createFilePrompt)
-    ld bc, 0x20
-    corelib(promptString)
-    or a
-    kjp(z, freeAndLoopBack)
-    ; Add file name to current dir
-    kcall(addToCurrentPath)
-    ; Check if file exists
-    kld(de, (currentpath))
-    pcall(fileExists)
-    jr nz, _
-    ld a, errAlreadyExists
-    or 1
-    corelib(showError)
-    ; Open file stream and write a 0 to it
-_:  pcall(openFileWrite)
-    cp errFileNotFound
-    jr z, _
-    corelib(showError)
-_:  xor a
-    pcall(streamWriteByte)
-    corelib(showError)
-    pcall(closeStream)
-    corelib(showError)
-.done:
-    ; Remove file name from current dir
-    kld(de, (currentPath))
-    kcall(restoreCurrentpath)
-    kjp(freeAndLoopBack)
 
 action_new_directory:
     ld bc, 33 ; TODO: better max name length
