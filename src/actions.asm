@@ -37,9 +37,9 @@ action_new:
         kld(a, (config_editSymLinks))
         or a
         jr z, _
-        ld a, 3
+        ld a, 2
         jr ++_
-_:      ld a, 2
+_:      ld a, 1
 _:      kld((newOptions), a)
         ; Show menu
         ld c, 42
@@ -64,7 +64,6 @@ _:      kld((newOptions), a)
 .menu_smc:
     jp 0
 new_menu_options:
-    .dw freeAndLoopBack ; File
     .dw action_new_directory ; Directory
     .dw action_new_link ; Link
 
@@ -81,34 +80,16 @@ action_new_directory:
     or a
     kjp(z, freeAndLoopBack)
     ; Create new directory
-    push ix \ pop de
-    kld(hl, (currentPath))
-    xor a
-    ld bc, 0
-    cpir
-    dec hl
-    ex de, hl
-    pcall(strlen)
-    inc bc
-    ldir
+    kcall(addToCurrentPath)
     kld(de, (currentPath))
     pcall(createDirectory)
     jr z, _
-    coreLib(showError)
-_:  ex de, hl
-    pcall(strlen)
-    add hl, bc
-    inc bc
-    ld a, '/'
-    cpdr
-    inc hl
-    inc hl
-    xor a
-    ld (hl), a
+    corelib(showError)
+_:  kcall(restoreCurrentPath)
     kjp(freeAndLoopBack)
 
 action_new_link:
-    # Get target path and link name
+    ; Get target path and link name
     ld bc, 0x42 ; TODO: better max name length
     pcall(malloc)
     ld (ix), 0
@@ -124,36 +105,18 @@ action_new_link:
     corelib(promptString)
     or a
     kjp(z, freeAndLoopBack)
-    # Add link name to current dir
-    push ix \ pop de
-    kld(hl, (currentPath))
-    xor a
-    ld bc, 0
-    cpir
-    dec hl
-    ex de, hl
-    pcall(strlen)
-    inc bc
-    ldir
-    # Creat link
+    ; Add link name to current dir
+    kcall(addToCurrentPath)
+    ; Create link
     kld(de, (currentPath))
     pcall(memSeekToStart)
     push ix \ pop hl
     pcall(createSymLink)
-    # Show error if it failed
+    ; Show error if it failed
     jr z, _
-    coreLib(showError)
-    # Remove link name from current dir
-_:  ex de, hl
-    pcall(strlen)
-    add hl, bc
-    inc bc
-    ld a, '/'
-    cpdr
-    inc hl
-    inc hl
-    xor a
-    ld (hl), a
+    corelib(showError)
+    ; Remove link name from current dir
+_:  kcall(restoreCurrentPath)
     kjp(freeAndLoopBack)
     
 action_delete:
@@ -284,3 +247,31 @@ trampoline:
     pcall(resumeThread)
     pcall(killCurrentThread)
 trampoline_end:
+
+addToCurrentPath:
+    ; Add file name at IX to current dir
+    push ix \ pop de
+    kld(hl, (currentPath))
+    xor a
+    ld bc, 0
+    cpir
+    dec hl
+    ex de, hl
+    pcall(strlen)
+    inc bc
+    ldir
+    ret
+
+restoreCurrentPath:
+    ; Remove file name from current path
+    ex de, hl
+    pcall(strlen)
+    add hl, bc
+    inc bc
+    ld a, '/'
+    cpdr
+    inc hl
+    inc hl
+    xor a
+    ld (hl), a
+    ret

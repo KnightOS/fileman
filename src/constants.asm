@@ -60,14 +60,11 @@ menuOptions:
     .db "Rename", 0
     .db "Exit", 0
 newOptions:
-    .db 3 ; Modified from config to omit "Link" unless option enabled
-    .db "File", 0
+    .db 2 ; Modified from config to omit "Link" unless option enabled
     .db "Directory", 0
     .db "Link", 0
 renamePrompt:
     .db "Rename file to:", 0
-createFilePrompt:
-    .db "Name of new file:", 0
 createDirPrompt:
     .db "Name of new directory:", 0
 createLinkTargetPrompt:
