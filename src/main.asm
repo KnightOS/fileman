@@ -50,10 +50,11 @@ _:      ex de, hl
     pop de
     ex de, hl
     kld((currentPath), hl)
-    ;pcall(directoryExists) ; TODO: Fix trailing slashes in directoryExists
-    cp a
+    ex de, hl
+    pcall(directoryExists) ; TODO: Fix trailing slashes in directoryExists
     jr z, _
     ; Move us back to / cause this doesn't exist
+    ex de, hl
     ld a, '/'
     ld (hl), a
     inc hl
