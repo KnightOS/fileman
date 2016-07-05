@@ -25,6 +25,9 @@ action_menu:
     jp 0
 menu_functions:
     .dw action_new
+    .dw action_cut
+    .dw action_copy
+    .dw freeAndLoopBack
     .dw action_delete
     .dw freeAndLoopBack ; Rename
     .dw action_exit
@@ -136,18 +139,7 @@ action_delete:
     kjp(z, freeAndLoopBack)
     ; DELETE IT
     ; Load it onto currentPath for a moment
-    ld a, d
-    sub b
-    add a, a
-    kld(hl, (fileList))
-    add l
-    ld l, a
-    jr nc, $+3
-    inc h
-    ld e, (hl)
-    inc hl
-    ld d, (hl)
-    inc de \ inc de
+    kcall(getCurFilename)
     kld(hl, (currentPath))
     xor a
     ld bc, 0
@@ -237,6 +229,23 @@ action_open:
     corelib(showMessage)
     kjp(freeAndLoopBack)
 
+action_cut:
+    ld a, 1
+    kld((deleteAfterPaste), a)
+action_copy:
+    push de
+        kld(de, (clipboard))
+        kld(hl, (currentPath))
+        pcall(strcpy)
+    pop de
+    kcall(getCurFilename)
+    kld(hl, (clipboard))
+    pcall(strlen)
+    add hl, bc
+    ex de,hl
+    pcall(strcpy)
+    kjp(freeAndLoopBack)
+
 trampoline:
     ld a, 0 ; Thread ID will be loaded here
     pcall(checkThread)
@@ -274,4 +283,20 @@ restoreCurrentPath:
     inc hl
     xor a
     ld (hl), a
+    ret
+
+getCurFilename:
+    ; Points DE to name of currently selected file
+    ld a, d
+    sub b
+    add a, a
+    kld(hl, (fileList))
+    add l
+    ld l, a
+    jr nc, $+3
+    inc h
+    ld e, (hl)
+    inc hl
+    ld d, (hl)
+    inc de \ inc de
     ret
