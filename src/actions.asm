@@ -27,9 +27,9 @@ menu_functions:
     .dw action_new
     .dw action_cut
     .dw action_copy
-    .dw freeAndLoopBack
+    .dw action_paste
     .dw action_delete
-    .dw freeAndLoopBack ; Rename
+    .dw freeAndLoopBack
     .dw action_exit
 
 action_new:
@@ -83,6 +83,7 @@ action_new_directory:
     or a
     kjp(z, freeAndLoopBack)
     ; Create new directory
+    push ix \ pop de
     kcall(addToCurrentPath)
     kld(de, (currentPath))
     pcall(createDirectory)
@@ -109,6 +110,7 @@ action_new_link:
     or a
     kjp(z, freeAndLoopBack)
     ; Add link name to current dir
+    push ix \ pop de
     kcall(addToCurrentPath)
     ; Create link
     kld(de, (currentPath))
@@ -165,6 +167,18 @@ action_delete:
 .deleteDirectory:
     ; TODO: delete directories
     ret
+
+;action_rename:
+;    ; Check if dir
+;    ; Load selection into currentPath
+;    kld(de, (currentPath))
+;    ; Prompt for new name
+;    ;pcall(renameFile)
+;    ; Restore currentPath
+;    kjp(freeAndLoopBack)
+;.renameDirectory:
+;    ; TODO: rename directories
+;    kjp(freeAndLoopBack)
 
 action_open:
     sub b
@@ -246,6 +260,89 @@ action_copy:
     pcall(strcpy)
     kjp(freeAndLoopBack)
 
+action_paste:
+    ; Create destination path
+    ; Point DE to filename in clipboard
+    kld(hl, (clipboard))
+    pcall(strlen)
+    ; TODO: Exit if length == 0 or no slashes
+    add hl, bc
+    ld a, '/'
+    cpdr
+    inc hl
+    inc hl
+    ex de, hl
+    ; Add file name to current directory
+    kcall(addToCurrentPath)
+    ; TODO: If file exists, append number to name
+    ; for now we'll just overwrite it
+    ; Allocate stream buffer (0x100 bytes, same as FS block size)
+    ld bc, 0x100
+    pcall(malloc)
+    jr z, _
+    corelib(showError)
+    jr .end
+    ; Open read stream
+_:  kld(de, (clipboard))
+    pcall(openFileRead)
+    jr z, _
+    corelib(showError)
+    jr .end
+    ; Open write stream
+_:  ex de,hl
+    kld(de, (currentPath))
+    pcall(openFileWrite)
+    jr z, .copyloop
+    corelib(showError)
+    jr .closeread
+    ; Read/write to buffer until end of file
+.copyloop:
+    ex de, hl
+    ; Check how much of the stream is left
+    ; and set the counter to that or the buffer size,
+    ; whichever is less.
+    push hl
+        pcall(getStreamInfo)
+        ld a, e
+        or a
+        jr nz, _
+        ld hl, 0x100
+        pcall(cpHLBC)
+        jr nc, ++_
+_:      ld bc, 0x100
+_:  pop hl
+
+    pcall(streamReadBuffer)
+    jr z, _
+    corelib(showError)
+    jr .closewrite
+_:  ex de, hl
+    push bc
+        pcall(streamWriteBuffer)
+        jr z, _
+        corelib(showError)
+    pop bc
+    jr .closewrite
+    ; If BC < 0x100, then that was the last chunk and we're done
+_:  pop bc
+    push hl
+        ld hl, 0x100
+        pcall(cpHLBC)
+    pop hl
+    jr z, .copyloop
+
+    ; Close streams
+.closewrite:
+    pcall(closeStream)
+.closeread:
+    ex de,hl
+    pcall(closeStream)
+.end:
+    ; Restore current directory
+    kld(de, (currentPath))
+    kcall(restoreCurrentPath)
+    kjp(freeAndLoopBack)
+
 trampoline:
     ld a, 0 ; Thread ID will be loaded here
     pcall(checkThread)
@@ -258,8 +355,7 @@ trampoline:
 trampoline_end:
 
 addToCurrentPath:
-    ; Add file name at IX to current dir
-    push ix \ pop de
+    ; Add file name at DE to current dir
     kld(hl, (currentPath))
     xor a
     ld bc, 0
@@ -272,7 +368,7 @@ addToCurrentPath:
     ret
 
 restoreCurrentPath:
-    ; Remove file name from current path
+    ; Remove file name from current path (DE)
     ex de, hl
     pcall(strlen)
     add hl, bc
