@@ -25,7 +25,6 @@ action_menu:
     jp 0
 menu_functions:
     .dw action_new
-    .dw action_cut
     .dw action_copy
     .dw action_paste
     .dw action_delete
@@ -243,9 +242,6 @@ action_open:
     corelib(showMessage)
     kjp(freeAndLoopBack)
 
-action_cut:
-    ld a, 1
-    kld((deleteAfterPaste), a)
 action_copy:
     push de
         kld(de, (clipboard))
@@ -311,7 +307,6 @@ _:  ex de,hl
         jr nc, ++_
 _:      ld bc, 0x100
 _:  pop hl
-
     pcall(streamReadBuffer)
     jr z, _
     corelib(showError)
@@ -330,7 +325,6 @@ _:  pop bc
         pcall(cpHLBC)
     pop hl
     jr z, .copyloop
-
     ; Close streams
 .closewrite:
     pcall(closeStream)

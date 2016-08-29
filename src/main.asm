@@ -351,8 +351,6 @@ scrollTop:
     .db 0
 clipboard:
     .dw 0
-deleteAfterPaste:
-    .db 0
 tabs:
     .db 2
     .db "Browse", 0
