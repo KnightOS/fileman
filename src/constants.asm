@@ -54,8 +54,10 @@ openFailOptions:
 startNotFound:
     .db "Start-up directory\nnot found.", 0
 menuOptions:
-    .db 4
+    .db 6
     .db "New...", 0
+    .db "Copy", 0
+    .db "Paste", 0
     .db "Delete", 0
     .db "Rename", 0
     .db "Exit", 0

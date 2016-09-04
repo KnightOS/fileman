@@ -51,7 +51,7 @@ _:      ex de, hl
     ex de, hl
     kld((currentPath), hl)
     ex de, hl
-    pcall(directoryExists) ; TODO: Fix trailing slashes in directoryExists
+    pcall(directoryExists)
     jr z, _
     ; Move us back to / cause this doesn't exist
     ex de, hl
@@ -73,6 +73,10 @@ _:      ex de, hl
 
 _:  ; Allocate space for fileList and directoryList
     ld bc, 512 ; Max 256 subdirectories and 256 files per directory
+    pcall(malloc)
+    corelib(showErrorAndQuit)
+    push ix \ pop hl
+    kld((clipboard), hl)
     pcall(malloc)
     corelib(showErrorAndQuit)
     push ix \ pop hl
@@ -345,6 +349,8 @@ scrollOffset:
     .db 0
 scrollTop:
     .db 0
+clipboard:
+    .dw 0
 tabs:
     .db 2
     .db "Browse", 0
