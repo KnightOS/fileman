@@ -261,8 +261,12 @@ action_paste:
     ; Point DE to filename in clipboard
     kld(hl, (clipboard))
     pcall(strlen)
-    ; TODO: Exit if length == 0 or no slashes
-    add hl, bc
+    ; Exit if length is 0
+    xor a
+    cp b \ jr nz, _
+    cp c \ jr nz, _
+    kjp(freeAndLoopBack)
+_:  add hl, bc
     ld a, '/'
     cpdr
     inc hl
