@@ -70,6 +70,8 @@ renamePrompt:
 createDirPrompt:
     .db "Name of new directory:", 0
 createLinkTargetPrompt:
-    .db "Path to link target:",0
+    .db "Path to link target:", 0
 createLinkNamePrompt:
-    .db "Name of new link:",0
+    .db "Name of new link:", 0
+duplicateName:
+    .db "-1", 0
