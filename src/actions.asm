@@ -274,10 +274,14 @@ _:  add hl, bc
     ex de, hl
     ; Add file name to current directory
     kcall(addToCurrentPath)
-    ; TODO: If file exists, append number to name
-    ; for now we'll just overwrite it
+    ; If file exists, append number to name
+    kld(de, (currentPath))
+_:  pcall(fileExists)
+    jr nz, _
+    kcall(incStr)
+    jr -_
     ; Allocate stream buffer (0x100 bytes, same as FS block size)
-    ld bc, 0x100
+_:  ld bc, 0x100
     pcall(malloc)
     jr z, _
     corelib(showError)
@@ -393,4 +397,65 @@ getCurFilename:
     inc hl
     ld d, (hl)
     inc de \ inc de
+    ret
+
+; DE: String
+incStr:
+    push de
+        ; Go to end of string
+        ex de, hl
+        xor a
+        ld bc, 0
+        cpir
+        dec hl
+        dec hl
+        ex de, hl
+        ; if string ends in number
+        ld a, (de)
+        kcall(isNum)
+        jr nc, .else
+        ; Work backwards to first numerical char
+_:      dec de
+        ld a, (de)
+        kcall(isNum)
+        jr c, -_
+        inc de
+        ; Make sure we don't go back past beginning of string
+        pop hl \ push hl
+        pcall(cpHLDE)
+        jr c, _
+        ex de, hl
+        ; convert to int, increment, write back string
+_:      push de
+            ex de, hl
+            ld b, 10
+            pcall(strtoi)
+        pop bc
+        inc hl
+        jr nc, _
+        inc de
+_:      push ix
+            push hl \ pop ix
+            push bc \ pop hl
+            ld c, e
+            ld a, d
+            pcall(itostr)
+        pop ix
+    pop de
+    ret
+.else:
+        ; add "-1" to end of string
+        inc de
+        kld(hl,duplicateName)
+        pcall(strcpy)
+    pop de
+    ret
+
+isNum:
+    cp '9' + 1
+    jr nc, _
+    cp '0'
+    ccf
+    ret
+_:  or a
     ret
