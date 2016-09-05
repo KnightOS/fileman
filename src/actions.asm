@@ -28,7 +28,7 @@ menu_functions:
     .dw action_copy
     .dw action_paste
     .dw action_delete
-    .dw freeAndLoopBack
+    .dw action_rename
     .dw action_exit
 
 action_new:
@@ -100,14 +100,14 @@ action_new_link:
     ld bc, 0x20
     corelib(promptString)
     or a
-    kjp(z, freeAndLoopBack)
+    jr z, .done
     add ix, bc
     inc ix
     ld (ix), 0
     kld(hl, createLinkNamePrompt)
     corelib(promptString)
     or a
-    kjp(z, freeAndLoopBack)
+    jr z, .done
     ; Add link name to current dir
     push ix \ pop de
     kcall(addToCurrentPath)
@@ -121,6 +121,8 @@ action_new_link:
     corelib(showError)
     ; Remove link name from current dir
 _:  kcall(restoreCurrentPath)
+.done:
+    pcall(free)
     kjp(freeAndLoopBack)
     
 action_delete:
@@ -141,15 +143,7 @@ action_delete:
     ; DELETE IT
     ; Load it onto currentPath for a moment
     kcall(getCurFilename)
-    kld(hl, (currentPath))
-    xor a
-    ld bc, 0
-    cpir
-    dec hl
-    ex de, hl
-    pcall(strlen)
-    inc bc
-    ldir
+    kcall(addToCurrentPath)
     kld(de, (currentPath))
     pcall(deleteFile)
 
@@ -167,17 +161,33 @@ action_delete:
     ; TODO: delete directories
     ret
 
-;action_rename:
-;    ; Check if dir
-;    ; Load selection into currentPath
-;    kld(de, (currentPath))
-;    ; Prompt for new name
-;    ;pcall(renameFile)
-;    ; Restore currentPath
-;    kjp(freeAndLoopBack)
-;.renameDirectory:
-;    ; TODO: rename directories
-;    kjp(freeAndLoopBack)
+action_rename:
+    ; Check if dir
+    ; Load selection into currentPath
+    kcall(getCurFilename)
+    push de
+        kcall(addToCurrentPath)
+    ; Prompt for new name
+        ld bc, 0x20
+        pcall(malloc)
+    pop hl
+    push ix \ pop de
+    pcall(strcpy)
+    kld(hl, renamePrompt)
+    corelib(promptString)
+    or a
+    jr z, .done
+    ; Rename
+    kld(de, (currentPath))
+    push ix \ pop hl
+    pcall(renameFile)
+    jr z, .done
+    corelib(showError)
+.done:
+    kld(de, (currentPath))
+    kcall(restoreCurrentPath)
+    pcall(free)
+    kjp(freeAndLoopBack)
 
 action_open:
     sub b
